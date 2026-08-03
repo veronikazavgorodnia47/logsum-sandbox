@@ -15,26 +15,19 @@ Coverage:
   - Exit codes and stdout silence
 """
 import csv
-from pathlib import Path
-
-import pytest
 
 from conftest import (
     HEADER,
-    R_CO_INFO_1,
-    R_CO_INFO_2,
-    R_CO_ERROR,
     R_CART_INFO,
     R_CART_WARN,
-    write_csv,
+    R_CO_ERROR,
+    R_CO_INFO_1,
+    R_CO_INFO_2,
     read_summary,
     run_logsum,
     run_logsum_defaults,
-    PROJECT_ROOT,
-    PYTHON,
-    _env,
+    write_csv,
 )
-
 
 # ── Grouping ──────────────────────────────────────────────────────────────────
 

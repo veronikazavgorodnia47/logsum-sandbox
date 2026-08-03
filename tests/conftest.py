@@ -52,6 +52,7 @@ def run_logsum(input_path: Path, output_path: Path) -> subprocess.CompletedProce
         text=True,
         cwd=str(PROJECT_ROOT),
         env=_env(),
+        check=False,
     )
 
 
@@ -63,6 +64,7 @@ def run_logsum_defaults(cwd: Path) -> subprocess.CompletedProcess:
         text=True,
         cwd=str(cwd),
         env=_env(),
+        check=False,
     )
 
 
