@@ -7,5 +7,5 @@
 | Model | claude-sonnet-4-6 |
 | Context loaded | spec.md, CLAUDE.md, prior session summary |
 | Files changed | src/logsum.py, spec.md, tests/test_logsum.py, tests/conftest.py, CLAUDE.md |
-| Plan deviations | None |
+| Plan deviations | CLAUDE.md was a fifth file not in the --min-count plan; updated as part of a concurrent /init task and bundled into the same commit. Content addition (commands, architecture, test helper docs) was correct but the bundling was unplanned. |
 | Untested items | None |
