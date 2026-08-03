@@ -36,7 +36,7 @@ def _normalise_row(row, lineno):
     return row["service"].strip(), raw_level.upper() or UNKNOWN_LEVEL, ts
 
 
-def process(input_path, output_path):
+def process(input_path, output_path, min_count=1):
     skipped = 0
     groups = defaultdict(lambda: {"count": 0, "first_seen": None, "last_seen": None})
 
@@ -83,6 +83,9 @@ def process(input_path, output_path):
         key=lambda r: (r["service"], r["level"]),
     )
 
+    if min_count > 1:
+        rows = [r for r in rows if r["count"] >= min_count]
+
     if skipped:
         print(
             f"info: {skipped} row(s) skipped due to malformed timestamps",
@@ -123,8 +126,15 @@ def main():
         metavar="PATH",
         help="Output summary CSV (default: data/summary.csv)",
     )
+    parser.add_argument(
+        "--min-count",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Only output groups with count >= N (default: 1)",
+    )
     args = parser.parse_args()
-    sys.exit(process(args.input, args.output))
+    sys.exit(process(args.input, args.output, args.min_count))
 
 
 if __name__ == "__main__":

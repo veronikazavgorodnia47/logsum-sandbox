@@ -44,10 +44,10 @@ def read_summary(path: Path) -> list:
         return list(csv.DictReader(fh))
 
 
-def run_logsum(input_path: Path, output_path: Path) -> subprocess.CompletedProcess:
+def run_logsum(input_path: Path, output_path: Path, extra_args=()) -> subprocess.CompletedProcess:
     """Invoke `python -m logsum` with explicit --input / --output paths."""
     return subprocess.run(
-        [PYTHON, "-m", "logsum", "--input", str(input_path), "--output", str(output_path)],
+        [PYTHON, "-m", "logsum", "--input", str(input_path), "--output", str(output_path), *extra_args],
         capture_output=True,
         text=True,
         cwd=str(PROJECT_ROOT),

@@ -463,3 +463,64 @@ class TestCLI:
         r = run_logsum(f, bad_out)
         assert r.returncode == 1
         assert r.stderr.strip()
+
+
+# ── --min-count filter ────────────────────────────────────────────────────────
+
+class TestMinCount:
+    def test_groups_below_threshold_excluded(self, tmp_path, out):
+        # checkout-service/INFO has count=1, cart-api/INFO has count=2
+        lines = [
+            HEADER,
+            R_CO_INFO_1,
+            R_CART_INFO,
+            "2024-01-02T11:00:00,INFO,cart-api,second",
+        ]
+        f = write_csv(tmp_path / "e.csv", lines)
+        run_logsum(f, out, extra_args=["--min-count", "2"])
+        rows = read_summary(out)
+        assert all(int(r["count"]) >= 2 for r in rows)
+        assert not any(r["service"] == "checkout-service" for r in rows)
+
+    def test_groups_at_threshold_included(self, tmp_path, out):
+        # count == N exactly must be included (boundary)
+        lines = [HEADER, R_CO_INFO_1, R_CO_INFO_2]  # checkout-service/INFO count=2
+        f = write_csv(tmp_path / "e.csv", lines)
+        run_logsum(f, out, extra_args=["--min-count", "2"])
+        rows = read_summary(out)
+        assert len(rows) == 1
+        assert rows[0]["count"] == "2"
+
+    def test_groups_above_threshold_included(self, tmp_path, out):
+        # count=3 passes --min-count 2
+        lines = [
+            HEADER,
+            R_CO_INFO_1,
+            R_CO_INFO_2,
+            "2024-01-01T12:00:00,INFO,checkout-service,third",
+        ]
+        f = write_csv(tmp_path / "e.csv", lines)
+        run_logsum(f, out, extra_args=["--min-count", "2"])
+        rows = read_summary(out)
+        assert len(rows) == 1
+        assert rows[0]["count"] == "3"
+
+    def test_min_count_1_includes_all_groups(self, tmp_path, out):
+        # --min-count 1 is equivalent to the default: nothing filtered
+        f = write_csv(tmp_path / "e.csv", [HEADER, R_CO_INFO_1, R_CART_INFO])
+        run_logsum(f, out, extra_args=["--min-count", "1"])
+        assert len(read_summary(out)) == 2
+
+    def test_min_count_above_all_counts_produces_header_only_output(self, tmp_path, out):
+        # All groups have count=1; --min-count 99 → nothing passes → header-only output
+        f = write_csv(tmp_path / "e.csv", [HEADER, R_CO_INFO_1, R_CART_INFO])
+        r = run_logsum(f, out, extra_args=["--min-count", "99"])
+        assert r.returncode == 0
+        assert read_summary(out) == []
+        assert out.exists()
+
+    def test_default_behaviour_unchanged(self, tmp_path, out):
+        # Omitting --min-count keeps all groups (regression guard)
+        f = write_csv(tmp_path / "e.csv", [HEADER, R_CO_INFO_1, R_CART_INFO])
+        run_logsum(f, out)
+        assert len(read_summary(out)) == 2

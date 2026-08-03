@@ -75,6 +75,7 @@ For each group:
 | **Malformed timestamp** | Skip row; warn to stderr with 1-based line number; report total skipped count at end |
 | **Empty input** (header only or zero-byte file) | Write header-only `summary.csv`; exit 0 |
 | **Duplicate header row** | Treated as a data row; will produce a skipped-timestamp warning |
+| **`--min-count` larger than all group counts** | Write header-only `summary.csv`; exit 0 |
 
 ---
 
@@ -88,6 +89,7 @@ python -m logsum [--input PATH] [--output PATH]
 |---|---|---|
 | `--input PATH` | `data/events.csv` | Path to the input events file |
 | `--output PATH` | `data/summary.csv` | Path for the written summary file |
+| `--min-count N` | `1` | Only output groups whose count ≥ N |
 
 **Exit codes**
 
