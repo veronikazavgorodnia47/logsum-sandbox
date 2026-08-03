@@ -18,6 +18,24 @@ def _valid_iso8601(value):
         return False
 
 
+def _normalise_row(row, lineno):
+    """Return (service, level, ts) for a valid row, or None to skip."""
+    ts = row["timestamp"].strip()
+    if not _valid_iso8601(ts):
+        print(
+            f"warning: line {lineno}: malformed timestamp {ts!r} — row skipped",
+            file=sys.stderr,
+        )
+        return None
+    raw_level = row["level"].strip()
+    if not raw_level:
+        print(
+            f"warning: line {lineno}: blank level replaced with {UNKNOWN_LEVEL}",
+            file=sys.stderr,
+        )
+    return row["service"].strip(), raw_level.upper() or UNKNOWN_LEVEL, ts
+
+
 def process(input_path, output_path):
     skipped = 0
     groups = defaultdict(lambda: {"count": 0, "first_seen": None, "last_seen": None})
@@ -36,24 +54,12 @@ def process(input_path, output_path):
                 )
                 return 1
             for lineno, row in enumerate(reader, start=2):
-                ts = row["timestamp"].strip()
-                if not _valid_iso8601(ts):
-                    print(
-                        f"warning: line {lineno}: malformed timestamp {ts!r} — row skipped",
-                        file=sys.stderr,
-                    )
+                result = _normalise_row(row, lineno)
+                if result is None:
                     skipped += 1
                     continue
-                raw_level = row["level"].strip()
-                if not raw_level:
-                    print(
-                        f"warning: line {lineno}: blank level replaced with {UNKNOWN_LEVEL}",
-                        file=sys.stderr,
-                    )
-                level = raw_level.upper() if raw_level else UNKNOWN_LEVEL
-                service = row["service"].strip()
-                key = (service, level)
-                g = groups[key]
+                service, level, ts = result
+                g = groups[(service, level)]
                 g["count"] += 1
                 if g["first_seen"] is None or ts < g["first_seen"]:
                     g["first_seen"] = ts
