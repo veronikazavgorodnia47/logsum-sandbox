@@ -2,8 +2,6 @@
 Integration tests for logsum CLI.
 All tests drive the CLI via subprocess; src/logsum.py is never imported directly.
 """
-from pathlib import Path
-
 from conftest import (
     HEADER,
     R_CART_INFO,
@@ -16,7 +14,6 @@ from conftest import (
     run_logsum_defaults,
     write_csv,
 )
-
 
 # ── Grouping ──────────────────────────────────────────────────────────────────
 
