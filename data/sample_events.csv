@@ -1,0 +1,10 @@
+timestamp,level,service,message
+2026-01-15T08:00:00,INFO,checkout-service,User logged in
+2026-01-15T08:05:00,INFO,checkout-service,Item added to cart
+2026-01-15T08:10:00,ERROR,checkout-service,Payment failed
+2026-01-15T08:15:00,INFO,cart-api,Cart retrieved
+2026-01-15T08:20:00,,cart-api,Level field is blank
+not-a-timestamp,WARN,checkout-service,Malformed timestamp row
+2026-01-15T08:30:00,WARN,cart-api,Cart item out of stock
+2026-01-15T08:35:00,ERROR,cart-api,Database timeout
+2026-01-15T09:00:00,ERROR,checkout-service,Session expired

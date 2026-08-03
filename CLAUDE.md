@@ -12,7 +12,7 @@ components (`checkout-service`, `cart-api`). No real data — synthetic logs onl
 - One file per logical unit; no nested packages needed at this scale
 
 ## Utilities to prefer
-- Python 3.11 standard library only (`csv`, `argparse`, `collections`)
+- Python 3.11 standard library only (`csv`, `argparse`, `collections`); use `python3` (not `python` — not in PATH on this machine)
 - `ruff` for linting
 - `pytest` for tests
 - No third-party dependencies (no pandas, no FastAPI, no cloud SDKs)

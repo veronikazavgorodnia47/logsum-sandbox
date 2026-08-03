@@ -113,6 +113,15 @@ text goes to stdout.
 
 ---
 
+## Implementation notes
+
+Blank-level rows are **counted** (assigned to `UNKNOWN`); malformed-timestamp rows are
+**not counted** at all. The asymmetry is intentional: a missing level is recoverable data;
+an unreadable timestamp means we cannot place the event in a time range, so the row is
+discarded entirely rather than producing a group with no temporal bounds.
+
+---
+
 ## Signed off
 
 VZ — 2026-08-03
