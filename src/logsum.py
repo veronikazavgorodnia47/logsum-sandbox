@@ -1,0 +1,134 @@
+"""logsum — aggregate events.csv into summary.csv grouped by (service, level)."""
+
+import argparse
+import csv
+import sys
+from collections import defaultdict
+from datetime import datetime
+
+REQUIRED_COLUMNS = {"timestamp", "level", "service", "message"}
+UNKNOWN_LEVEL = "UNKNOWN"
+
+
+def _valid_iso8601(value):
+    try:
+        datetime.fromisoformat(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def process(input_path, output_path, min_count=1):
+    skipped = 0
+    groups = defaultdict(lambda: {"count": 0, "first_seen": None, "last_seen": None})
+
+    try:
+        with open(input_path, newline="", encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            fieldnames = reader.fieldnames
+            if not fieldnames:
+                return _write_output(output_path, [])
+            missing = REQUIRED_COLUMNS - {f.strip() for f in fieldnames}
+            if missing:
+                print(
+                    f"error: missing required columns: {', '.join(sorted(missing))}",
+                    file=sys.stderr,
+                )
+                return 1
+            for lineno, row in enumerate(reader, start=2):
+                ts = row["timestamp"].strip()
+                if not _valid_iso8601(ts):
+                    print(
+                        f"warning: line {lineno}: malformed timestamp {ts!r} — row skipped",
+                        file=sys.stderr,
+                    )
+                    skipped += 1
+                    continue
+                raw_level = row["level"].strip()
+                if not raw_level:
+                    print(
+                        f"warning: line {lineno}: blank level replaced with {UNKNOWN_LEVEL}",
+                        file=sys.stderr,
+                    )
+                level = raw_level.upper() if raw_level else UNKNOWN_LEVEL
+                service = row["service"].strip()
+                g = groups[(service, level)]
+                g["count"] += 1
+                if g["first_seen"] is None or ts < g["first_seen"]:
+                    g["first_seen"] = ts
+                if g["last_seen"] is None or ts > g["last_seen"]:
+                    g["last_seen"] = ts
+    except OSError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    rows = sorted(
+        [
+            {
+                "service": service,
+                "level": level,
+                "count": g["count"],
+                "first_seen": g["first_seen"],
+                "last_seen": g["last_seen"],
+            }
+            for (service, level), g in groups.items()
+        ],
+        key=lambda r: (r["service"], r["level"]),
+    )
+
+    if min_count > 1:
+        rows = [r for r in rows if r["count"] >= min_count]
+
+    if skipped:
+        print(
+            f"info: {skipped} row(s) skipped due to malformed timestamps",
+            file=sys.stderr,
+        )
+
+    return _write_output(output_path, rows)
+
+
+def _write_output(output_path, rows):
+    try:
+        with open(output_path, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=["service", "level", "count", "first_seen", "last_seen"],
+            )
+            writer.writeheader()
+            writer.writerows(rows)
+    except OSError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Aggregate events.csv by (service, level)."
+    )
+    parser.add_argument(
+        "--input",
+        default="data/events.csv",
+        metavar="PATH",
+        help="Input events CSV (default: data/events.csv)",
+    )
+    parser.add_argument(
+        "--output",
+        default="data/summary.csv",
+        metavar="PATH",
+        help="Output summary CSV (default: data/summary.csv)",
+    )
+    parser.add_argument(
+        "--min-count",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Only output groups with count >= N (default: 1)",
+    )
+    args = parser.parse_args()
+    sys.exit(process(args.input, args.output, args.min_count))
+
+
+if __name__ == "__main__":
+    main()
